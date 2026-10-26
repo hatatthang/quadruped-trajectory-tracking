@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Camera Ver0 · Theo dõi line</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#193640;background:#f0f5f6}*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:1400px;margin:auto}h1{font-size:26px;margin:0}h2{font-size:19px;margin:0 0 12px}p{line-height:1.5}header{display:flex;justify-content:space-between;gap:20px;margin-bottom:20px}a{color:#087e72}.layout{display:grid;grid-template-columns:minmax(400px,1.4fr) minmax(350px,1fr);gap:18px}.card{background:white;border:1px solid #d7e2e5;border-radius:16px;padding:20px;margin-bottom:16px}button{background:#087e72;color:white;border:0;border-radius:8px;padding:12px 16px;font-size:15px;cursor:pointer}button.secondary{background:#e3efed;color:#193640}button:disabled{opacity:.45;cursor:default}.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}label{display:block;margin:12px 0;font-size:14px;line-height:1.5}input[type=number]{width:90px;padding:8px;border:1px solid #acbec4;border-radius:6px}input[type=text]{width:100%;padding:10px;border:1px solid #acbec4;border-radius:6px}input[type=checkbox]{accent-color:#087e72}.hint{font-size:13px;color:#56717a}.warn{background:#fff3db;padding:12px;border-radius:8px;font-size:14px}.msg{padding:14px;border-radius:10px;background:#e3efed;white-space:pre-wrap;overflow-wrap:anywhere}.error{background:#ffe7e1}.imagebox{position:relative;background:#142630;aspect-ratio:16/9}.imagebox img{width:100%;height:100%;object-fit:contain}.imagebox canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}#plot{width:100%;height:270px;border:1px solid #d7e2e5;border-radius:8px}.metrics{font-size:18px;line-height:1.8;font-variant-numeric:tabular-nums}small{display:block;color:#56717a}#saved{overflow-wrap:anywhere} @media(max-width:900px){body{padding:12px}.layout{grid-template-columns:1fr}header{display:block}}
+</style></head><body><main>
+<header><div><h1>Theo dõi đường line</h1><p>Camera quan sát và ghi dữ liệu · Robot chưa nhận lệnh điều khiển từ trang này.</p></div><a href="/plane">Kiểm chứng A/B</a></header>
+<div class="layout"><section>
+<div class="card"><h2>Camera và hai mốc đường line</h2><div class="row"><button id="open">Mở camera</button><button id="stopPreview" class="secondary">Dừng xem vị trí</button></div>
+<div class="imagebox"><img id="camera" alt="Hình camera"><canvas id="overlay" width="1920" height="1080"></canvas></div>
+<p id="clickHelp" class="hint">Bấm «Chọn mốc 0», rồi bấm vào tâm băng keo tại vạch 0 cm trong ảnh. Làm tương tự ở 100 cm.</p>
+<div class="row"><button id="pick0" class="secondary">Chọn mốc 0</button><button id="pick1" class="secondary">Chọn mốc 100</button><button id="measure" class="secondary">Đo thử khoảng cách</button><button id="resetPts" class="secondary">Đặt lại hai mốc</button></div>
+<p id="pointStatus" class="hint">Chưa chọn mốc.</p>
+<p id="lineLen" class="metrics" style="font-size:16px"></p></div>
+<div class="card"><h2>Đường đang đo</h2><div id="metrics" class="metrics">Chưa có vị trí.</div><canvas id="plot" width="850" height="300"></canvas>
+<p class="hint">X: tiến từ 0 về 100 cm. Y: lệch sang trái (+), sang phải (−). Đường đứt màu xám là băng keo Y = 0. Đồ thị ngắt tại mẫu mất marker; không nối bù dữ liệu.</p></div>
+</section><section>
+<div class="card"><h2>1 · Giữ đúng cấu hình đo</h2>
+<p id="planeStatus" class="hint">Đang đọc mặt phẳng…</p>
+<div id="restoreBox"><label><input type="checkbox" id="unchanged"> Camera/tripod, lấy nét và độ phân giải giữ nguyên từ lượt A/B vừa đo.</label><button id="restore" class="secondary">Khôi phục mặt phẳng vừa dùng</button></div>
+<label>Mặt in marker cao <input id="height" type="number" value="100" min="1" max="500" step="0.1"> mm so với sàn</label>
+<button id="preview">Bật xem vị trí</button><p class="hint">Đổi chiều cao: dừng xem, sửa số rồi bật lại. Nếu camera đã dịch chuyển, về trang A/B để thu lại mặt phẳng.</p></div>
+<div class="card"><h2>2 · Hướng robot và tâm cần theo dõi</h2>
+<label><input type="checkbox" id="aligned"> Robot đứng yên, đầu hướng 0 → 100 cm, trục dọc thân song song băng keo.</label>
+<p class="hint">Giữ yên ít nhất 4 giây. Đây là mốc hướng đặt bằng tay, chưa phải kiểm chứng độ chính xác góc.</p>
+<label>Từ tâm marker đến tâm hình học thân: X <input id="offsetX" type="number" value="82.5" step="0.1"> mm; Y <input id="offsetY" type="number" value="-0.5" step="0.1"> mm</label>
+<small>X dương về phía đầu robot; Y dương sang trái robot. 82,5 / −0,5 mm là giá trị đã chốt; chỉ đổi khi đo lại tâm thân.</small>
+<label><input type="checkbox" id="offsetConfirmed"> Tôi đã kiểm tra hai khoảng lệch trên và muốn theo dõi tâm thân.</label>
+<p class="hint">Chưa chọn ô này: chỉ theo dõi tâm marker, vẫn ghi được lượt thử đứng yên.</p>
+<button id="configure">Xác nhận hệ trục và hướng thân</button><p id="setupInfo" class="hint"></p></div>
+<div class="card"><h2>3 · Ghi lượt thử</h2>
+<label>Ghi chú lượt thử <input id="note" type="text" value="STAND đứng yên 15 giây" maxlength="500"></label>
+<div class="row"><button id="record">Bắt đầu ghi</button><button id="stop" class="secondary">Kết thúc và lưu</button></div>
+<div class="row"><button id="gait" class="secondary">Đánh dấu bắt đầu bước</button><button id="intervention" class="secondary">Đánh dấu can thiệp</button></div>
+<p class="hint">Hai nút đánh dấu chỉ lưu thời điểm bấm, không điều khiển robot. Lượt đầu: giữ STAND 15 giây rồi kết thúc.</p>
+<p id="runInfo"></p><p id="saved" class="hint"></p>
+<div class="warn">Phép đo đang được kiểm chứng. Giả thiết mặt marker nằm ngang ở độ cao đã nhập; nhún hoặc nghiêng khi đi có thể gây sai số. Sai lệch khoảng 4 mm/200 mm đã thấy ở hai đầu đường.</div></div>
+<div id="message" class="msg" role="status" aria-live="polite">Chuẩn bị camera, giữ robot đứng yên.</div>
+</section></div></main>
+<script>
+const token='__TOKEN__',$=id=>document.getElementById(id);let state={},planeState={},points=[null,null],pick=null,busy=false,stream=false,dirty=true,lineLen='';
+const fmt=(v,d=1)=>Number.isFinite(v)?v.toFixed(d):'—';
+async function command(route,data={}){if(busy)return;busy=true;render();try{const r=await fetch(route,{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':token},body:JSON.stringify(data)});const v=await r.json();if(!r.ok||!v.ok)throw Error(v.message);if(route.endsWith('/configure'))dirty=false;if(route.endsWith('/preview'))dirty=true;$('message').textContent=v.message;$('message').className='msg';}catch(e){$('message').textContent=e.message;$('message').className='msg error';}finally{busy=false;await poll();}}
+function draw(){const c=$('overlay'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);points.forEach((p,i)=>{if(!p)return;ctx.strokeStyle='#ffcd42';ctx.lineWidth=4;ctx.beginPath();ctx.arc(p[0],p[1],12,0,2*Math.PI);ctx.stroke();ctx.fillStyle='#ffcd42';ctx.font='bold 26px sans-serif';ctx.fillText(i?'100 cm':'0 cm',p[0]+16,p[1]-16);});const latest=state.latest;if(latest?.detected&&latest.corners_px){ctx.strokeStyle='#46efb0';ctx.lineWidth=3;ctx.beginPath();latest.corners_px.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.stroke();}
+const pc=$('plot'),g=pc.getContext('2d');g.clearRect(0,0,pc.width,pc.height);const trail=state.trail||[],valid=trail.filter(p=>p&&p.every(Number.isFinite)),range=Math.max(100,...valid.map(p=>Math.abs(p[1])+20));const xmin=Math.min(-50,...valid.map(p=>p[0]-20)),xmax=Math.max(1050,...valid.map(p=>p[0]+20));const x=v=>50+(v-xmin)/(xmax-xmin)*760,y=v=>140-v/range*110;g.strokeStyle='#a1aeb4';g.setLineDash([6,6]);g.beginPath();g.moveTo(x(0),y(0));g.lineTo(x(1000),y(0));g.stroke();g.setLineDash([]);g.fillStyle='#56717a';g.font='13px sans-serif';g.fillText('0',x(0),285);g.fillText('1000 mm',x(1000)-45,285);g.fillText('Y +'+Math.round(range)+' mm',5,18);g.fillText('−'+Math.round(range)+' mm',5,267);g.strokeStyle='#087e72';g.lineWidth=2;g.beginPath();let pen=false;for(const p of trail){if(!p){pen=false;continue;}if(pen)g.lineTo(x(p[0]),y(p[1]));else{g.moveTo(x(p[0]),y(p[1]));pen=true;}}g.stroke();if(valid.length){const p=valid.at(-1);g.beginPath();g.arc(x(p[0]),y(p[1]),4,0,Math.PI*2);g.fillStyle='#087e72';g.fill();}}
+function render(){const s=state,p=planeState.plane,c=planeState.camera;const active=!!s.active,recording=!!s.recording;
+$('planeStatus').textContent=p?.valid?'Mặt phẳng hiện có · mặt bảng '+fmt(p.board_height_mm)+' mm':'Chưa có mặt phẳng dùng được trong phiên này.';$('restoreBox').hidden=!!p?.valid;
+if(c?.status==='live'&&!stream){$('camera').src='/stream';stream=true;}else if(c?.status!=='live'&&stream){$('camera').removeAttribute('src');stream=false;}
+if(c?.actual_size?.[0]){const [w,h]=c.actual_size;if($('overlay').width!==w){$('overlay').width=w;$('overlay').height=h;}}
+$('height').disabled=active||busy;$('open').disabled=busy||active||c?.status==='live';$('preview').disabled=busy||active||!p?.valid;$('restore').disabled=busy||active||!$('unchanged').checked||c?.status!=='live';$('stopPreview').disabled=busy||!active;
+$('configure').disabled=busy||!active||recording||!points.every(Boolean)||!$('aligned').checked;
+for(const id of ['pick0','pick1','resetPts','aligned','offsetX','offsetY','offsetConfirmed'])$(id).disabled=busy||recording;
+$('measure').disabled=busy||recording||!active||!points.every(Boolean);$('lineLen').textContent=lineLen;
+$('record').disabled=busy||!active||!s.setup||recording||dirty;$('stop').disabled=busy||!recording;$('gait').disabled=busy||!recording;$('intervention').disabled=busy||!recording;
+$('pointStatus').textContent=points.map((p,i)=>(i?'100':'0')+' cm: '+(p?'('+Math.round(p[0])+', '+Math.round(p[1])+') px':'chưa chọn')).join(' · ');
+const l=s.latest; $('metrics').textContent=l?.detected&&Number.isFinite(l.x_mm)?(l.body_offset_applied?'Tâm thân':'Tâm marker')+' · X '+fmt(l.x_mm)+' mm · Y '+fmt(l.y_mm)+' mm · Góc '+fmt(l.heading_deg)+'°':l?.detected?'Đã nhận marker · chưa xác lập hệ trục':l?.reason||'Chưa có vị trí.';
+$('setupInfo').textContent=s.setup?'Đã xác nhận · hai mốc cách '+fmt(s.setup.clicked_line_length_mm)+' mm (lệch '+fmt(s.setup.clicked_line_length_mm-1000)+' mm so với 1000) · '+(s.setup.offset_confirmed?'có bù tâm thân':'chỉ theo dõi tâm marker'):'';
+$('runInfo').textContent=recording?'ĐANG GHI · '+s.recording.samples+' mẫu, '+s.recording.detected+' mẫu nhận marker':'';
+$('saved').textContent=s.last_run?'Đã lưu '+s.last_run.samples+' mẫu tại: '+s.last_run.directory:'';if(s.error){$('message').textContent=s.error;$('message').className='msg error';}draw();}
+let polling=false;async function poll(){if(polling)return;polling=true;try{const responses=await Promise.all([fetch('/api/line/state'),fetch('/api/plane/state')]);if(responses.some(r=>!r.ok))throw Error('Không đọc được trạng thái máy chủ.');[state,planeState]=await Promise.all(responses.map(r=>r.json()));render();}catch(e){$('message').textContent='Mất kết nối: '+e.message;$('message').className='msg error';state.latest=null;draw();}finally{polling=false;}}
+$('open').onclick=()=>command('/api/start');$('restore').onclick=()=>command('/api/line/restore',{camera_unchanged:$('unchanged').checked});$('preview').onclick=()=>command('/api/line/preview',{marker_height_mm:Number($('height').value)});$('stopPreview').onclick=()=>command('/api/line/cancel');
+$('unchanged').onchange=render;['aligned','offsetConfirmed','offsetX','offsetY'].forEach(id=>$(id).onchange=()=>{dirty=true;render();});
+for(let i=0;i<2;i++)$('pick'+i).onclick=()=>{pick=i;$('clickHelp').textContent='Bấm vào tâm băng keo tại vạch '+(i?'100':'0')+' cm trên sàn, không bấm vào marker trên robot.';};
+$('overlay').onclick=e=>{if(pick===null||state.recording)return;const r=e.target.getBoundingClientRect();points[pick]=[(e.clientX-r.left)/r.width*e.target.width,(e.clientY-r.top)/r.height*e.target.height];pick=null;dirty=true;render();if(points.every(Boolean))measureNow();};
+async function measureNow(){if(!points.every(Boolean)||busy)return;await command('/api/line/measure',{points_px:points});lineLen=$('message').className==='msg'?$('message').textContent:'Chưa đo được khoảng cách.';render();}
+$('measure').onclick=measureNow;
+$('resetPts').onclick=()=>{points=[null,null];pick=null;lineLen='';dirty=true;$('clickHelp').textContent='Đã xoá hai mốc. Bấm «Chọn mốc 0» rồi bấm vào tâm băng keo tại vạch 0 cm.';render();};
+$('configure').onclick=()=>command('/api/line/configure',{points_px:points,heading_aligned:$('aligned').checked,offset_x_mm:Number($('offsetX').value),offset_y_mm:Number($('offsetY').value),offset_confirmed:$('offsetConfirmed').checked});
+$('record').onclick=()=>command('/api/line/record',{note:$('note').value});$('stop').onclick=()=>command('/api/line/stop');$('gait').onclick=()=>command('/api/line/event',{name:'gait_start'});$('intervention').onclick=()=>command('/api/line/event',{name:'manual_intervention'});
+// Ep lai gia tri chot moi lan tai trang. Trinh duyet tu khoi phuc gia tri
+// da go truoc do khi F5, nen mac dinh trong HTML khong duoc ton trong.
+for(const [id,v] of [['height','100'],['offsetX','82.5'],['offsetY','-0.5']]){$(id).value=v;$(id).setAttribute('autocomplete','off');}
+$('camera').onerror=()=>{stream=false;};poll();setInterval(poll,700);
+</script></body></html>

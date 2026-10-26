@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.bak*
+connection.json
+data/
+circle_runs/
+slprj/
+*.slxc
+*.asv
+~$*

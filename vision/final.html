@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Camera Ver0 · Final</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#193640;background:#f0f5f6}*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:1400px;margin:auto}h1{font-size:26px;margin:0}h2{font-size:19px;margin:0 0 12px}p{line-height:1.5}header{display:flex;justify-content:space-between;gap:20px;margin-bottom:20px}a{color:#087e72}.layout{display:grid;grid-template-columns:minmax(400px,1.4fr) minmax(350px,1fr);gap:18px}.card{background:white;border:1px solid #d7e2e5;border-radius:16px;padding:20px;margin-bottom:16px}button{background:#087e72;color:white;border:0;border-radius:8px;padding:12px 16px;font-size:15px;cursor:pointer}button.secondary{background:#e3efed;color:#193640}button:disabled{opacity:.45;cursor:default}.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}label{display:block;margin:12px 0;font-size:14px;line-height:1.5}input[type=number]{width:90px;padding:8px;border:1px solid #acbec4;border-radius:6px}input[type=text]{width:100%;padding:10px;border:1px solid #acbec4;border-radius:6px}input[type=checkbox]{accent-color:#087e72}.hint{font-size:13px;color:#56717a}.warn{background:#fff3db;padding:12px;border-radius:8px;font-size:14px}.msg{padding:14px;border-radius:10px;background:#e3efed;white-space:pre-wrap;overflow-wrap:anywhere}.error{background:#ffe7e1}.imagebox{position:relative;background:#142630;aspect-ratio:16/9}.imagebox img{width:100%;height:100%;object-fit:contain}.imagebox canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}#plot{width:100%;height:270px;border:1px solid #d7e2e5;border-radius:8px}.metrics{font-size:18px;line-height:1.8;font-variant-numeric:tabular-nums}small{display:block;color:#56717a}#saved{overflow-wrap:anywhere} @media(max-width:900px){body{padding:12px}.layout{grid-template-columns:1fr}header{display:block}}
+
+body{padding:16px}.card{padding:14px;margin-bottom:12px}h2{font-size:17px;margin-bottom:8px}header{margin-bottom:12px}header p{margin:6px 0;font-size:14px}section:nth-child(2) label{margin:7px 0;font-size:13px}section:nth-child(2) p,section:nth-child(2) small{font-size:12px;margin:7px 0;line-height:1.4}section:nth-child(2) button{padding:8px 11px;font-size:13px}section:nth-child(2) input{padding:6px}section:nth-child(2) .row{margin:6px 0}.readouts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.readout{background:#eef6f4;border:1px solid #cee4de;border-radius:10px;padding:12px}.readout span{display:block;font-size:13px;color:#56717a}.readout strong{font-size:29px;font-variant-numeric:tabular-nums}.readout.stale{background:#f1f2f3;color:#77858b}#freshness{font-size:13px;margin:6px 0 12px}#uartStatus,#events{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}#events{max-height:115px;overflow:auto}#pause{background:#a5432d}#port{width:90px}#metrics{font-size:14px}select{padding:6px;border:1px solid #acbec4;border-radius:6px}.warn{font-size:12px;padding:8px}
+
+.advicebox{margin-top:12px;padding:12px;border:1px solid #b7ced8;border-radius:10px;background:#f5f9fb}.advicebox h3{margin:0 0 8px;font-size:16px}.advicebox p{font-size:13px;line-height:1.5;margin:6px 0}.advicebox label{font-size:13px;margin:6px 0}.advicebox .nums{font-variant-numeric:tabular-nums;white-space:pre-wrap}.advicebox .decision{font-weight:650;color:#214955}.advicebox .caution{color:#79521a}.advicebox details{font-size:12px;line-height:1.5}
+.card.compact{padding:8px 12px;margin-bottom:8px}.card.compact h2{font-size:15px;margin:0 0 4px}.card.compact label{margin:3px 0;font-size:12px}.card.compact p,.card.compact small{font-size:11px;margin:3px 0;line-height:1.3}.card.compact button{padding:6px 10px;font-size:12px}.card.compact input{padding:4px}#events{max-height:280px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;margin-bottom:8px}.pair>.card{margin-bottom:0}@media(max-width:900px){.pair{grid-template-columns:1fr}}
+</style></head><body><main>
+<header><div><h1>Điều khiển bám đường thẳng</h1><p>Quan sát, ghi dữ liệu · Điều khiển bằng tay hoặc tự động thử nghiệm.</p></div><div><a href="/line">Trang line cũ</a> · <a href="/plane">Kiểm chứng A/B</a></div></header>
+<div class="layout"><section>
+<div class="card"><h2>Camera</h2><div class="row"><button id="open">Mở camera</button><button id="stopPreview" class="secondary">Dừng xem vị trí</button></div>
+<div class="imagebox"><img id="camera" alt="Hình camera"><canvas id="overlay" width="1920" height="1080"></canvas></div>
+<p id="clickHelp" class="hint">Bấm «Chọn mốc 0», rồi bấm vào tâm băng keo tại vạch 0 cm trong ảnh. Làm tương tự ở 100 cm.</p>
+<div class="row"><button id="pick0" class="secondary">Chọn mốc 0</button><button id="pick1" class="secondary">Chọn mốc 100</button><button id="measure" class="secondary">Đo thử khoảng cách</button><button id="resetPts" class="secondary">Đặt lại hai mốc</button></div>
+<p id="pointStatus" class="hint">Chưa chọn mốc.</p>
+<p id="lineLen" class="metrics" style="font-size:16px"></p></div>
+<div class="card"><h2>Đường đang đo</h2><div id="metrics" class="metrics">Chưa có vị trí.</div>
+<div class="readouts"><div class="readout" id="latCard"><span>Lệch ngang so với line</span><strong id="lateral">— mm</strong></div><div class="readout" id="angCard"><span>Góc mũi thân so với line</span><strong id="heading">— °</strong></div><div class="readout" id="courseCard"><span>Góc hướng đi (chỉ đo khi bước, trung bình 12 s)</span><strong id="course">— °</strong></div></div><p id="freshness">Chưa có mẫu camera.</p><canvas id="plot" width="850" height="300"></canvas>
+<p class="hint">Lệch ngang: trái (+), phải (−). Đường đứt: line chuẩn. Số đo tức thời có cả dao động dồn thân khi bước; bộ điều khiển dùng cửa sổ đủ pha.</p><div class="advicebox" style="display:none"><h3>Phân tích và hiệu chỉnh</h3>
+<label><input id="adviceEnabled" type="checkbox"> Hiện phân tích theo pha (Manual: chỉ đề xuất)</label>
+<p id="adviceDecision" class="decision">Chưa bật phân tích.</p>
+<p id="adviceFiltered" class="nums">Sai lệch đại diện: —</p><p id="adviceTrend" class="nums">So với cùng pha chu kỳ trước: —</p>
+<p id="adviceTrim" class="nums">Trim đề xuất: — · đã gửi: — · MCU áp dụng: —</p>
+<p id="adviceSchedule">Chưa chuẩn bị mục tiêu cho chu kỳ kế tiếp.</p>
+<p class="caution">Bằng tay: chỉ đề xuất. Tự động: gửi hiệu chỉnh theo pha. Lệnh tay được ưu tiên đến khi đạt mục tiêu và đi thêm một chu kỳ, rồi tự động xét lại.</p>
+<details><summary>Cách xét dao động và thời điểm đề xuất</summary>
+<p>Lấy cửa sổ 12 giây gần nhất, chia đều 12 nhóm pha; trung vị từng nhóm rồi tính trung bình các nhóm. Đây là mức lệch đại diện có trễ khoảng 6 giây, chưa phải vị trí hiện tại đã loại sạch dao động. Chênh lệch cùng pha chỉ là chỉ báo trôi, chưa chứng minh nguyên nhân.</p>
+<p>Xét vượt 10 mm HOẶC 3°, duy trì ít nhất 0,5 giây; trở về khi dưới cả 5 mm VÀ 1,5°. Ngưỡng thử, chưa tối ưu. Chuẩn bị trước ranh giới 1–1,5 giây; lần đầu cần đủ dữ liệu nên thường từ chu kỳ 3.</p>
+<p>Công thức thử: hướng về line = giới hạn atan(−Y/200 mm) trong ±6°; trim = giới hạn [3 + 0,5 × (hướng về line − góc đại diện)] trong [0,6]°/chu kỳ. MCU đổi tối đa 3° mỗi chu kỳ. Các hệ số cần kiểm chứng trên robot, nhất là mức nền sau thay servo.</p>
+<p>Cần UART kết nối trên /final để ghép pha. Nếu dùng CMD riêng: camera vẫn ghi bình thường, ô này chưa có pha trực tiếp; đối chiếu hai nhật ký sau. Không kết nối COM ở cả hai nơi.</p>
+</details></div></div>
+</section><section>
+<div class="pair"><div class="card compact"><h2>1 · Cấu hình đo</h2>
+<p id="planeStatus" class="hint">Đang đọc mặt phẳng…</p>
+<div id="restoreBox"><label><input type="checkbox" id="unchanged"> Camera/tripod, lấy nét và độ phân giải giữ nguyên từ lượt A/B vừa đo.</label><button id="restore" class="secondary">Khôi phục mặt phẳng vừa dùng</button></div>
+<label>Mặt in marker cao <input id="height" type="number" value="100" min="1" max="500" step="0.1"> mm so với sàn</label>
+<button id="preview">Bật xem vị trí</button><p class="hint">Đổi chiều cao: dừng xem rồi sửa. Camera dịch chuyển: thu lại mặt phẳng ở A/B.</p></div>
+<div class="card compact"><h2>2 · Hướng và bù tâm thân</h2>
+<label><input type="checkbox" id="aligned"> Robot đứng yên, đầu hướng 0 → 100 cm, trục dọc thân song song băng keo.</label>
+<p class="hint">Giữ yên 4 giây trước khi xác nhận hướng.</p>
+<label>Từ tâm marker đến tâm hình học thân: X <input id="offsetX" type="number" value="82.5" step="0.1"> mm; Y <input id="offsetY" type="number" value="-0.5" step="0.1"> mm</label>
+<small style="display:none">X dương về phía đầu robot; Y dương sang trái robot. 82,5 / −0,5 mm là giá trị đã chốt; chỉ đổi khi đo lại tâm thân.</small>
+<label><input type="checkbox" id="offsetConfirmed"> Bật bù tâm thân · đã kiểm tra X/Y.</label>
+<p class="hint">Không tích: đo tâm marker.</p>
+<button id="configure">Xác nhận hệ trục và hướng thân</button><p id="setupInfo" class="hint"></p></div></div>
+<div class="card"><h2>3 · UART và điều khiển</h2>
+<div class="row"><input id="port" type="text" value="COM4" aria-label="Cổng UART"><button id="connect">Kết nối</button><button id="disconnect" class="secondary">Ngắt</button></div>
+<p>Đóng UART_COM4.cmd trước khi kết nối tại đây.</p>
+<div class="row"><label>Chế độ <select id="controlMode"><option value="manual">Manual</option><option value="auto">Auto</option></select></label><button id="confirmMode">Xác nhận chế độ</button></div>
+<p id="modeInfo" class="hint">Chế độ thực tế: Manual.</p>
+<p class="hint" style="display:none">Auto dùng chu kỳ 12 giây của firmware build 202609230; trang kiểm tra build trước khi cho robot chạy.</p>
+<p id="controlStatus" class="msg">Điều khiển bằng tay.</p>
+<p id="trimFlow" class="hint">Trim: chờ kết nối MCU.</p>
+<div class="row"><button id="startRobot">Chạy / Tiếp tục</button><button id="pause">Tạm dừng</button></div>
+<label>Trim mục tiêu <input id="trim" type="number" value="2" min="-5" max="10" step="0.1"> °/chu kỳ <button id="sendTrim">Gửi T</button></label>
+<div id="uartStatus" class="msg">Chưa kết nối MCU.</div><p id="uartLog" style="display:none"></p><div id="events"></div>
+<p class="warn">Tự động: mất marker ngắn thì giữ trim đang áp dụng; nhận lại 3 mẫu liên tiếp thì xét tiếp. Mất quá 2 giây thì dừng theo pha, cần bấm Tiếp tục. Tạm dừng hoàn tất pha chân hiện hành, không cắt nguồn tức thì.</p></div>
+<div class="card"><h2>4 · Ghi lượt thử</h2>
+<label>Ghi chú lượt thử <input id="note" type="text" value="STAND đứng yên 15 giây" maxlength="500"></label><label><input type="checkbox" id="videoOn" checked> Quay video cùng lượt ghi (như GHI_HINH; kết thúc lượt thì tự dựng video.mp4 và nhanh.gif)</label><div class="row" style="margin:2px 0 6px"><label style="margin:0 14px 0 0"><input type="checkbox" id="videoTrail"> Vẽ vệt tâm thân</label><label style="margin:0"><input type="checkbox" id="videoRef"> Hiện đường tham chiếu (line 0–100 cm)</label></div>
+<div class="row"><button id="record">Bắt đầu ghi</button><button id="stop" class="secondary">Kết thúc và lưu</button></div>
+<div class="row"><button id="gait" class="secondary">Đánh dấu bắt đầu bước</button><button id="intervention" class="secondary">Đánh dấu can thiệp</button></div>
+<p class="hint">Nút đánh dấu chỉ ghi nhật ký, không ra lệnh robot.</p><p id="videoInfo" class="hint"></p>
+<p id="runInfo"></p><p id="saved" class="hint" style="display:none"></p>
+<div class="warn">Phép đo đang được kiểm chứng. Giả thiết mặt marker nằm ngang ở độ cao đã nhập; nhún hoặc nghiêng khi đi có thể gây sai số. Sai lệch khoảng 4 mm/200 mm đã thấy ở hai đầu đường.</div></div>
+<div id="message" class="msg" role="status" aria-live="polite">Chuẩn bị camera, giữ robot đứng yên.</div>
+</section></div></main>
+<script>
+const token='__TOKEN__',$=id=>document.getElementById(id);let state={},planeState={},finalState={},finalFetched=0,points=[null,null],pick=null,busy=false,stream=false,dirty=true,lineLen='',modeDraft=null,modePending=null,modeFeedback='',modeEvents=[];
+const fmt=(v,d=1)=>Number.isFinite(v)?v.toFixed(d):'—';
+async function command(route,data={}){if(busy)return false;busy=true;render();let ok=false;try{const r=await fetch(route,{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':token},body:JSON.stringify(data)});const v=await r.json();if(!r.ok||!v.ok)throw Error(v.message);if(route.endsWith('/configure'))dirty=false;if(route.endsWith('/preview'))dirty=true;if(route.endsWith('/mode'))finalState.mode=data.mode;$('message').textContent=v.message;$('message').className='msg';ok=true;}catch(e){$('message').textContent=e.message;$('message').className='msg error';}finally{busy=false;await poll();}return ok;}
+function draw(){const c=$('overlay'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);points.forEach((p,i)=>{if(!p)return;ctx.strokeStyle='#ffcd42';ctx.lineWidth=4;ctx.beginPath();ctx.arc(p[0],p[1],12,0,2*Math.PI);ctx.stroke();ctx.fillStyle='#ffcd42';ctx.font='bold 26px sans-serif';ctx.fillText(i?'100 cm':'0 cm',p[0]+16,p[1]-16);});const latest=state.latest;if(latest?.detected&&latest.corners_px){ctx.strokeStyle='#46efb0';ctx.lineWidth=3;ctx.beginPath();latest.corners_px.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.stroke();}
+const pc=$('plot'),g=pc.getContext('2d');g.clearRect(0,0,pc.width,pc.height);const trail=state.trail||[],valid=trail.filter(p=>p&&p.every(Number.isFinite)),range=Math.max(100,...valid.map(p=>Math.abs(p[1])+20));const xmin=Math.min(-50,...valid.map(p=>p[0]-20)),xmax=Math.max(1050,...valid.map(p=>p[0]+20));const x=v=>50+(v-xmin)/(xmax-xmin)*760,y=v=>140-v/range*110;g.strokeStyle='#a1aeb4';g.setLineDash([6,6]);g.beginPath();g.moveTo(x(0),y(0));g.lineTo(x(1000),y(0));g.stroke();g.setLineDash([]);g.fillStyle='#56717a';g.font='13px sans-serif';g.fillText('0',x(0),285);g.fillText('1000 mm',x(1000)-45,285);g.fillText('Y +'+Math.round(range)+' mm',5,18);g.fillText('−'+Math.round(range)+' mm',5,267);g.strokeStyle='#087e72';g.lineWidth=2;g.beginPath();let pen=false;for(const p of trail){if(!p){pen=false;continue;}if(pen)g.lineTo(x(p[0]),y(p[1]));else{g.moveTo(x(p[0]),y(p[1]));pen=true;}}g.stroke();if(valid.length){const p=valid.at(-1);g.beginPath();g.arc(x(p[0]),y(p[1]),4,0,Math.PI*2);g.fillStyle='#087e72';g.fill();}}
+function render(){const s=state,p=planeState.plane,c=planeState.camera;const active=!!s.active,recording=!!s.recording;
+$('planeStatus').textContent=p?.valid?'Mặt phẳng hiện có · mặt bảng '+fmt(p.board_height_mm)+' mm':'Chưa có mặt phẳng dùng được trong phiên này.';$('restoreBox').hidden=!!p?.valid;
+if(c?.status==='live'&&!stream){$('camera').src='/stream';stream=true;}else if(c?.status!=='live'&&stream){$('camera').removeAttribute('src');stream=false;}
+if(c?.actual_size?.[0]){const [w,h]=c.actual_size;if($('overlay').width!==w){$('overlay').width=w;$('overlay').height=h;}}
+$('height').disabled=active||busy;$('open').disabled=busy||active||c?.status==='live';$('preview').disabled=busy||active||!p?.valid;$('restore').disabled=busy||active||!$('unchanged').checked||c?.status!=='live';$('stopPreview').disabled=busy||!active;
+$('configure').disabled=busy||!active||recording||!points.every(Boolean)||!$('aligned').checked;
+for(const id of ['pick0','pick1','resetPts','aligned','offsetX','offsetY','offsetConfirmed'])$(id).disabled=busy||recording;
+$('measure').disabled=busy||recording||!active||!points.every(Boolean);$('lineLen').textContent=lineLen;
+$('record').disabled=busy||!active||!s.setup||recording||dirty;$('videoOn').disabled=$('videoTrail').disabled=$('videoRef').disabled=recording;$('stop').disabled=busy||!recording;$('gait').disabled=busy||!recording;$('intervention').disabled=busy||!recording;
+$('pointStatus').textContent=points.map((p,i)=>(i?'100':'0')+' cm: '+(p?'('+Math.round(p[0])+', '+Math.round(p[1])+') px':'chưa chọn')).join(' · ');
+renderFinal();
+$('setupInfo').textContent=s.setup?'Đã xác nhận · hai mốc cách '+fmt(s.setup.clicked_line_length_mm)+' mm (lệch '+fmt(s.setup.clicked_line_length_mm-1000)+' mm so với 1000) · '+(s.setup.offset_confirmed?'có bù tâm thân':'chỉ theo dõi tâm marker'):'';
+$('runInfo').textContent=recording?'ĐANG GHI · '+s.recording.samples+' mẫu, '+s.recording.detected+' mẫu nhận marker':'';
+$('saved').textContent=s.last_run?'Đã lưu '+s.last_run.samples+' mẫu tại: '+s.last_run.directory:'';if(s.error){$('message').textContent=s.error;$('message').className='msg error';}draw();}
+let polling=false;async function poll(){if(polling)return;polling=true;try{const responses=await Promise.all([fetch('/api/line/state'),fetch('/api/plane/state'),fetch('/api/final/state')]);if(responses.some(r=>!r.ok))throw Error('Không đọc được trạng thái máy chủ.');[state,planeState,finalState]=await Promise.all(responses.map(r=>r.json()));finalFetched=performance.now();render();}catch(e){$('message').textContent='Mất kết nối: '+e.message;$('message').className='msg error';state.latest=null;finalFetched=0;renderFinal();draw();}finally{polling=false;}}
+var adviceTry=-1e9;function renderFinal(){if(finalState.mode==='manual'&&finalState.advice_enabled===false&&!busy&&performance.now()-adviceTry>5000){adviceTry=performance.now();setTimeout(()=>command('/api/final/advice',{enabled:true,period_s:12}),0);}
+ const m=finalState.measurement||{},elapsed=finalFetched?(performance.now()-finalFetched)/1000:Infinity;
+ const age=Number.isFinite(m.age_s)?m.age_s+elapsed:Infinity,fresh=m.fresh&&age<=.6;
+ $('metrics').textContent=(m.body?'Tâm thân':'Tâm marker')+' · X dọc line: '+(fresh?fmt(m.x_mm):'—')+' mm';
+ $('lateral').textContent=(fresh?fmt(m.y_mm):'—')+' mm';$('heading').textContent=(fresh?fmt(m.heading_deg):'—')+' °';
+ for(const id of ['latCard','angCard'])$(id).classList.toggle('stale',!fresh);
+ const co=finalState.advice?.estimate?.course_deg;const coOk=!!(fresh&&finalState.advice?.valid&&co!=null);
+ $('course').textContent=(coOk?fmt(co):'—')+' °';$('courseCard').classList.toggle('stale',!coOk);
+ $('freshness').textContent=(fresh?'Đang nhận marker':m.detected?'Mẫu cũ / chưa có hệ trục':'Mất marker / chưa bật xem')+' · Tuổi mẫu '+(Number.isFinite(age)?fmt(age,2)+' s':'—')+(m.time_unix?' · Chụp lúc '+new Date(m.time_unix*1000).toLocaleTimeString('vi-VN'):'');
+ const t=finalState.telemetry,connected=finalState.connected,valid=t&&t.age_s+elapsed<.6&&t.fault===0&&t.build===finalState.build_required;
+ $('connect').disabled=busy||connected||finalState.connecting;$('disconnect').disabled=busy||!connected;$('port').disabled=connected||finalState.connecting;
+ $('startRobot').disabled=busy||!valid||![8,10].includes(t?.stage);$('pause').disabled=busy||!connected;
+ $('sendTrim').disabled=busy||!valid||!finalState.authorized||![3,4,5].includes(t?.stage);
+ $('uartStatus').textContent=t?('MCU '+t.stage_name+' · fault '+t.fault+' · tuổi '+fmt(t.age_s+elapsed,2)+' s\nTrim áp dụng '+fmt(t.trim,3)+' / mục tiêu '+fmt(finalState.target,3)+' °/chu kỳ\nĐã bước '+fmt(t.gait_s,2)+' s / N='+t.cycles+'\nYaw MCU '+fmt(t.yaw_ref_deg)+'° là tham chiếu'):(finalState.error||'Chưa kết nối MCU.');
+ $('uartLog').textContent=finalState.log_path?'Nhật ký UART + camera: '+finalState.log_path:'';
+ $('events').textContent=[...(finalState.events||[]),...modeEvents].slice(-20).join('\n');
+ const a=finalState.advice,e=a?.estimate,good=!!(a?.valid&&fresh&&valid&&elapsed<.6);
+ const actualMode=finalState.mode||'manual',selectedMode=modePending||modeDraft||actualMode,modeLocked=busy||finalState.authorized||[3,4,5,9].includes(t?.stage);
+ if(document.activeElement!==$('controlMode')||modeDraft||modePending)$('controlMode').value=selectedMode;
+ $('controlMode').disabled=modeLocked;$('confirmMode').disabled=modeLocked||!modeDraft||modeDraft===actualMode;
+ $('modeInfo').textContent='Chế độ thực tế: '+(actualMode==='auto'?'Auto':'Manual')+'. '+(modeFeedback||'Chỉ đổi khi robot chưa chạy hoặc đã dừng.');
+ $('controlStatus').textContent=finalState.mode==='auto'&&finalState.control_message!=='Điều khiển bằng tay.'?(finalState.control_message||'Auto: đang theo dõi camera.'):(finalState.mode==='auto'?'Auto đã chọn; chờ dữ liệu camera và lệnh bắt đầu.':'Manual: hệ thống chỉ gửi mục tiêu bạn chọn.');
+ $('adviceEnabled').checked=!!finalState.advice_enabled;$('adviceEnabled').disabled=busy||finalState.mode==='auto';
+ $('adviceDecision').textContent=!finalState.advice_enabled?'Chưa bật phân tích.':!connected?'Chờ telemetry: kết nối UART trên /final; CMD vẫn có thể khảo sát riêng.':!good?(a?.message||'Chưa đủ mẫu mới và pha gait.'):(a.message+(finalState.mode==='auto'?' · tự động':' · không tự gửi'));
+ $('adviceFiltered').textContent=good?'Đại diện 12 s: Y '+fmt(e.y_mm)+' mm · hướng '+fmt(e.heading_deg)+'°\nDao động đỉnh–đỉnh trong cửa sổ: '+fmt(e.y_span_mm)+' mm / '+fmt(e.heading_span_deg)+'° · trễ đại diện ≈ '+fmt(e.lag_s)+' s':'Sai lệch đại diện: — (chưa dùng số đo thô để kết luận)';
+ $('adviceTrend').textContent=(good?'Cùng pha so với chu kỳ trước: ΔY '+fmt(e.same_phase_dy_mm)+' mm · Δgóc '+fmt(e.same_phase_dheading_deg)+'°':'So với cùng pha chu kỳ trước: —')+'\nĐộ lệch chéo (hướng đi − góc thân): '+(good&&e.crab_deg!=null?fmt(e.crab_deg)+'° · góc thân phải giữ ≈ '+fmt(-e.crab_deg)+'° mới đi dọc line':'— (cần đủ một chu kỳ và đã tiến đủ xa)');
+ const sent=finalState.last_sent_trim;
+ $('adviceTrim').textContent='Trim đề xuất '+(good?fmt(e.proposed_trim,2):'—')+' · T gửi gần nhất '+(sent?fmt(sent.value,2):'—')+' · MCU áp dụng '+(valid?fmt(t.trim,2):'—')+' °/chu kỳ'+(good?'\nDự kiến sau giới hạn 3°/chu kỳ: '+fmt(e.next_trim,2)+' · phần bù so với nền 3: '+fmt(e.delta_from_base,2):'');
+ $('trimFlow').textContent=(finalState.mode==='auto'?'Auto: trim đề xuất ':'Manual: trim đề xuất ')+(good?fmt(e.proposed_trim,2):'chưa đủ mẫu')+' · đã gửi '+(sent?fmt(sent.value,2):'—')+' · MCU áp dụng '+(valid?fmt(t.trim,2):'—')+' °/chu kỳ';
+ const prep=a?.prepared,liveG=t? t.gait_s+Math.max(0,t.age_s+elapsed):0;
+ $('adviceSchedule').textContent=good&&e.boundary_s>=t.cycles*12?'Đang ở chu kỳ cuối: giữ trim đến DONE.':good&&prep&&prep.eligible&&liveG<prep.deadline_s+.35?'Đã chuẩn bị '+fmt(prep.proposed_trim,2)+' cho chu kỳ '+prep.candidate_cycle+' (mốc '+fmt(prep.boundary_s,1)+' s). Xem T gửi gần nhất và MCU áp dụng bên trên.':good?'Dự kiến chuẩn bị trước '+fmt(e.deadline_s,1)+' s để áp ở mốc '+fmt(e.boundary_s,1)+' s.':'Chưa chuẩn bị mục tiêu cho chu kỳ kế tiếp.';
+
+}
+$('adviceEnabled').onchange=()=>command('/api/final/advice',{enabled:$('adviceEnabled').checked,period_s:12});
+$('controlMode').onchange=()=>{const chosen=$('controlMode').value;modeDraft=chosen===finalState.mode?null:chosen;modeFeedback=modeDraft?'Đã chọn '+(chosen==='auto'?'Auto':'Manual')+' trên giao diện; bấm Xác nhận chế độ để áp dụng.':'Đây đã là chế độ đang hoạt động.';renderFinal();};
+$('confirmMode').onclick=async()=>{const requested=modeDraft;if(!requested)return;const previous=finalState.mode||'manual';modePending=requested;modeFeedback='Đang xác nhận '+(requested==='auto'?'Auto':'Manual')+'…';const ok=await command('/api/final/mode',{mode:requested,period_s:12});modePending=null;if(ok)modeDraft=null;modeFeedback=ok?'Đã chuyển thành công sang '+(requested==='auto'?'Auto':'Manual')+'.':'Chưa đổi chế độ: '+$('message').textContent;const eventNeedle='Đổi chế độ '+previous+' -> '+requested;if(!ok||!(finalState.events||[]).some(x=>x.includes(eventNeedle))){modeEvents.push(new Date().toLocaleTimeString('vi-VN')+' '+(ok?'Đã xác nhận chế độ '+(requested==='auto'?'Auto':'Manual')+'.':'Đổi chế độ thất bại: '+$('message').textContent));modeEvents=modeEvents.slice(-8);}renderFinal();};
+$('connect').onclick=()=>command('/api/final/connect',{port:$('port').value});$('disconnect').onclick=()=>command('/api/final/disconnect');
+$('startRobot').onclick=()=>command('/api/final/start');$('pause').onclick=()=>command('/api/final/stop');
+$('sendTrim').onclick=()=>command('/api/final/trim',{trim:Number($('trim').value)});
+setInterval(renderFinal,100);
+$('open').onclick=()=>command('/api/start');$('restore').onclick=()=>command('/api/line/restore',{camera_unchanged:$('unchanged').checked});$('preview').onclick=()=>command('/api/line/preview',{marker_height_mm:Number($('height').value)});$('stopPreview').onclick=()=>command('/api/line/cancel');
+$('unchanged').onchange=render;['aligned','offsetConfirmed','offsetX','offsetY'].forEach(id=>$(id).onchange=()=>{dirty=true;render();});
+for(let i=0;i<2;i++)$('pick'+i).onclick=()=>{pick=i;$('clickHelp').textContent='Bấm vào tâm băng keo tại vạch '+(i?'100':'0')+' cm trên sàn, không bấm vào marker trên robot.';};
+$('overlay').onclick=e=>{if(pick===null||state.recording)return;const r=e.target.getBoundingClientRect();points[pick]=[(e.clientX-r.left)/r.width*e.target.width,(e.clientY-r.top)/r.height*e.target.height];pick=null;dirty=true;render();if(points.every(Boolean))measureNow();};
+async function measureNow(){if(!points.every(Boolean)||busy)return;await command('/api/line/measure',{points_px:points});lineLen=$('message').className==='msg'?$('message').textContent:'Chưa đo được khoảng cách.';render();}
+$('measure').onclick=measureNow;
+$('resetPts').onclick=()=>{points=[null,null];pick=null;lineLen='';dirty=true;$('clickHelp').textContent='Đã xoá hai mốc. Bấm «Chọn mốc 0» rồi bấm vào tâm băng keo tại vạch 0 cm.';render();};
+$('configure').onclick=()=>command('/api/line/configure',{points_px:points,heading_aligned:$('aligned').checked,offset_x_mm:Number($('offsetX').value),offset_y_mm:Number($('offsetY').value),offset_confirmed:$('offsetConfirmed').checked});
+$('record').onclick=async()=>{const ok=await command('/api/line/record',{note:$('note').value});if(ok&&$('videoOn').checked)await command('/api/finalvideo/start',{trail:$('videoTrail').checked,reference:$('videoRef').checked});};$('stop').onclick=()=>command('/api/line/stop');$('gait').onclick=()=>command('/api/line/event',{name:'gait_start'});$('intervention').onclick=()=>command('/api/line/event',{name:'manual_intervention'});
+// Ep lai gia tri chot moi lan tai trang. Trinh duyet tu khoi phuc gia tri
+// da go truoc do khi F5, nen mac dinh trong HTML khong duoc ton trong.
+for(const [id,v] of [['height','100'],['offsetX','82.5'],['offsetY','-0.5']]){$(id).value=v;$(id).setAttribute('autocomplete','off');}
+$('camera').onerror=()=>{stream=false;};poll();setInterval(poll,250);
+async function pollVideo(){try{const r=await fetch('/api/finalvideo/state');if(!r.ok)throw 0;const v=await r.json(),l=v.last;$('videoInfo').textContent=v.recording?'ĐANG QUAY VIDEO · '+v.frames+' khung'+(v.options.trail?' · vẽ vệt':'')+(v.options.reference?' · đường tham chiếu':''):l?'Video lượt vừa ghi: '+l.frames+' khung · '+({dang_dung:'đang dựng video.mp4 và nhanh.gif…',xong:'đã dựng '+l.files.join(', '),loi:'dựng video lỗi (ảnh vẫn còn)',khong_co_anh:'không có ảnh'}[l.build]||l.build):'';}catch(e){$('videoInfo').textContent='';}}pollVideo();setInterval(pollVideo,1000);
+</script></body></html>
