@@ -56,6 +56,20 @@ See [`docs/thesis_report_vi.pdf`](docs/thesis_report_vi.pdf) (Vietnamese) for th
   <img src="media/matlab_sim.png" width="48%" alt="MATLAB simulation">
 </p>
 
+## Dashboard
+
+All camera work is done from a local web dashboard served by the Python program. It handles floor-plane setup, A→B distance checks, line reference selection, UART connection, Auto/Manual mode and live logging.
+
+<p align="center">
+  <img src="media/dashboard_closed_loop.png" width="90%" alt="Closed-loop dashboard">
+</p>
+<p align="center"><em>Closed-loop run: live camera view with ArUco marker and line reference, measured lateral/heading error, and UART control panel.</em></p>
+
+<p align="center">
+  <img src="media/dashboard_measurement.png" width="90%" alt="Measurement validation dashboard">
+</p>
+<p align="center"><em>Measurement validation: 16 samples at each of positions A and B, RMS noise 0.15 / 0.22 mm, A→B distance 197.2 mm vs. 200.0 mm ruler (−1.39 %).</em></p>
+
 ## Repository structure
 
 ```
